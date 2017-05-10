@@ -131,36 +131,10 @@ void EtherMACFullDuplex::startFrameTransmission()
 void EtherMACFullDuplex::processFrameFromUpperLayer(Packet *packet)
 {
     ASSERT(packet->getByteLength() >= MIN_ETHERNET_FRAME_BYTES);
-    auto origLength = packet->getByteLength();
 
     EV_INFO << "Received " << packet << " from upper layer." << endl;
 
     emit(packetReceivedFromUpperSignal, packet);
-
-
-    //FIXME //KLUDGE remove FCS, and padding if possible
-    {
-        const auto& ethHeader = packet->peekHeader<EtherFrame>();
-        packet->popTrailer<EthernetFcs>(byte(ETHER_FCS_BYTES));
-        if (auto header = dynamic_cast<EtherFrameWithPayloadLength *>(ethHeader.get())) {
-            bit payloadLength = byte(header->getPayloadLength());
-            if (packet->getDataLength() < payloadLength)
-                throw cRuntimeError("incorrect payload length in ethernet frame");
-            packet->setTrailerPopOffset(packet->getHeaderPopOffset() + ethHeader->getChunkLength() + payloadLength);
-        }
-        else {
-            //FIXME KLUDGE: when type-or-length field is type, then padding length is unknown here,
-            // this code removes ethernet padding, needed for unchanged fingerprints
-            for (;;) {
-                const auto& chunk = packet->peekTrailer<Chunk>();
-                if (typeid(*chunk) != typeid(EthernetPadding))
-                    break;
-                packet->setTrailerPopOffset(packet->getTrailerPopOffset() - chunk->getChunkLength());
-            }
-        }
-        packet->removePoppedTrailers();
-    }
-
 
     auto frame = packet->peekHeader<EtherFrame>();
     if (frame->getDest().equals(address)) {
@@ -194,7 +168,6 @@ void EtherMACFullDuplex::processFrameFromUpperLayer(Packet *packet)
     }
 
     EtherEncap::addPaddingAndFcs(packet, fcsMode);
-    ASSERT(origLength == packet->getByteLength());
 
     bool isPauseFrame = (dynamic_cast<EtherPauseFrame *>(frame.get()) != nullptr);
 

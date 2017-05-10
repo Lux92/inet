@@ -124,8 +124,6 @@ void EtherEncap::processPacketFromHigherLayer(Packet *msg)
         msg->pushHeader(eth2Frame);
     }
 
-    EtherEncap::addPaddingAndFcs(msg, FCS_DECLARED_CORRECT);
-
     EV_INFO << "Sending " << msg << " to lower layer.\n";
     send(msg, "lowerLayerOut");
 }
@@ -228,9 +226,7 @@ void EtherEncap::handleSendPause(cMessage *msg)
     frame->setDest(dest);
     packet->pushHeader(frame);
 
-    EtherEncap::addPaddingAndFcs(packet, FCS_DECLARED_CORRECT);
-
-   EV_INFO << "Sending " << frame << " to lower layer.\n";
+    EV_INFO << "Sending " << frame << " to lower layer.\n";
     send(packet, "lowerLayerOut");
 
     emit(pauseSentSignal, pauseUnits);
