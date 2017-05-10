@@ -205,25 +205,51 @@ void EtherMAC::handleMessage(cMessage *msg)
 
 void EtherMAC::processFrameFromUpperLayer(Packet *packet)
 {
+    auto origLength = packet->getByteLength();
     ASSERT(packet->getByteLength() >= MIN_ETHERNET_FRAME_BYTES);
 
     EV_INFO << "Received " << packet << " from upper layer." << endl;
 
     emit(packetReceivedFromUpperSignal, packet);
 
-    auto frame = packet->peekHeader<EtherFrame>();
-    if (frame->getDest().equals(address)) {
-        throw cRuntimeError("Logic error: frame %s from higher layer has local MAC address as dest (%s)",
-                packet->getFullName(), frame->getDest().str().c_str());
+
+    //FIXME //KLUDGE remove FCS, and padding if possible
+    {
+        const auto& ethHeader = packet->peekHeader<EtherFrame>();
+        packet->popTrailer<EthernetFcs>(byte(ETHER_FCS_BYTES));
+        if (auto header = dynamic_cast<EtherFrameWithPayloadLength *>(ethHeader.get())) {
+            bit payloadLength = byte(header->getPayloadLength());
+            if (packet->getDataLength() < payloadLength)
+                throw cRuntimeError("incorrect payload length in ethernet frame");
+            packet->setTrailerPopOffset(packet->getHeaderPopOffset() + ethHeader->getChunkLength() + payloadLength);
+        }
+        else {
+            //FIXME KLUDGE: when type-or-length field is type, then padding length is unknown here,
+            // this code removes ethernet padding, needed for unchanged fingerprints
+            for (;;) {
+                const auto& chunk = packet->peekTrailer<Chunk>();
+                if (typeid(*chunk) != typeid(EthernetPadding))
+                    break;
+                packet->setTrailerPopOffset(packet->getTrailerPopOffset() - chunk->getChunkLength());
+            }
+        }
+        packet->removePoppedTrailers();
     }
 
-    if (packet->getByteLength() > MAX_ETHERNET_FRAME_BYTES) {
+
+    auto header = packet->peekHeader<EtherFrame>();
+    if (header->getDest().equals(address)) {
+        throw cRuntimeError("Logic error: frame %s from higher layer has local MAC address as dest (%s)",
+                packet->getFullName(), header->getDest().str().c_str());
+    }
+
+    if (packet->getByteLength() > MAX_ETHERNET_FRAME_BYTES - ETHER_FCS_BYTES) {
         throw cRuntimeError("Packet from higher layer (%d bytes) exceeds maximum Ethernet frame size (%d)",
                 (int)(packet->getByteLength()), MAX_ETHERNET_FRAME_BYTES);
     }
 
     if (!connected || disabled) {
-        EV_WARN << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping packet " << frame << endl;
+        EV_WARN << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping packet " << packet << endl;
         emit(dropPkFromHLIfaceDownSignal, packet);
         numDroppedPkFromHLIfaceDown++;
         delete packet;
@@ -233,16 +259,18 @@ void EtherMAC::processFrameFromUpperLayer(Packet *packet)
     }
 
     // fill in src address if not set
-    if (frame->getSrc().isUnspecified()) {
+    if (header->getSrc().isUnspecified()) {
         //FIXME frame is immutable
-        packet->removeFromBeginning(frame->getChunkLength());
-        frame = std::dynamic_pointer_cast<EtherFrame>(frame->dupShared());
-        frame->setSrc(address);
-        frame->markImmutable();
-        packet->pushHeader(frame);
+        packet->removeFromBeginning(header->getChunkLength());
+        header = std::dynamic_pointer_cast<EtherFrame>(header->dupShared());
+        header->setSrc(address);
+        packet->insertHeader(header);
     }
 
-    bool isPauseFrame = (dynamic_cast<EtherPauseFrame *>(frame.get()) != nullptr);
+    EtherEncap::addPaddingAndFcs(packet, fcsMode);
+    ASSERT(origLength == packet->getByteLength());
+
+    bool isPauseFrame = (dynamic_cast<EtherPauseFrame *>(header.get()) != nullptr);
 
     if (!isPauseFrame) {
         numFramesFromHL++;

@@ -33,7 +33,6 @@ class EtherFrame;
 class INET_API EtherEncap : public cSimpleModule
 {
   protected:
-    EthernetFcsMode fcsMode = (EthernetFcsMode)-1;
     int seqNum;
 
     // statistics

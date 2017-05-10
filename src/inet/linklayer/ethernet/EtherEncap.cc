@@ -41,16 +41,6 @@ simsignal_t EtherEncap::pauseSentSignal = registerSignal("pauseSent");
 void EtherEncap::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        const char *fcsModeString = par("fcsMode");
-        if (!strcmp(fcsModeString, "declaredCorrect"))
-            fcsMode = FCS_DECLARED_CORRECT;
-        else if (!strcmp(fcsModeString, "declaredIncorrect"))
-            fcsMode = FCS_DECLARED_INCORRECT;
-        else if (!strcmp(fcsModeString, "computed"))
-            fcsMode = FCS_COMPUTED;
-        else
-            throw cRuntimeError("Unknown crc mode: '%s'", fcsModeString);
-
         seqNum = 0;
         WATCH(seqNum);
         totalFromHigherLayer = totalFromMAC = totalPauseSent = 0;
@@ -134,7 +124,7 @@ void EtherEncap::processPacketFromHigherLayer(Packet *msg)
         msg->pushHeader(eth2Frame);
     }
 
-    EtherEncap::addPaddingAndFcs(msg, fcsMode);
+    EtherEncap::addPaddingAndFcs(msg, FCS_DECLARED_CORRECT);
 
     EV_INFO << "Sending " << msg << " to lower layer.\n";
     send(msg, "lowerLayerOut");
@@ -238,7 +228,7 @@ void EtherEncap::handleSendPause(cMessage *msg)
     frame->setDest(dest);
     packet->pushHeader(frame);
 
-    EtherEncap::addPaddingAndFcs(packet, fcsMode);
+    EtherEncap::addPaddingAndFcs(packet, FCS_DECLARED_CORRECT);
 
    EV_INFO << "Sending " << frame << " to lower layer.\n";
     send(packet, "lowerLayerOut");

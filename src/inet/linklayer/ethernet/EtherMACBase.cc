@@ -160,6 +160,16 @@ void EtherMACBase::initialize(int stage)
         transmissionChannel = nullptr;
         curTxFrame = nullptr;
 
+        const char *fcsModeString = par("fcsMode");
+        if (!strcmp(fcsModeString, "declaredCorrect"))
+            fcsMode = FCS_DECLARED_CORRECT;
+        else if (!strcmp(fcsModeString, "declaredIncorrect"))
+            fcsMode = FCS_DECLARED_INCORRECT;
+        else if (!strcmp(fcsModeString, "computed"))
+            fcsMode = FCS_COMPUTED;
+        else
+            throw cRuntimeError("Unknown crc mode: '%s'", fcsModeString);
+
         initializeFlags();
 
         initializeMACAddress();

@@ -29,6 +29,7 @@
 #include "inet/common/queue/IPassiveQueue.h"
 #include "inet/linklayer/base/MACBase.h"
 #include "inet/linklayer/common/MACAddress.h"
+#include "inet/linklayer/ethernet/EtherFrame_m.h"
 
 namespace inet {
 
@@ -130,6 +131,7 @@ class INET_API EtherMACBase : public MACBase
     static const EtherDescr nullEtherDescr;
 
     // configuration
+    EthernetFcsMode fcsMode = (EthernetFcsMode)-1;
     bool sendRawBytes = false;
     const EtherDescr *curEtherDescr = nullptr;    // constants for the current Ethernet mode, e.g. txrate
     MACAddress address;    // own MAC address

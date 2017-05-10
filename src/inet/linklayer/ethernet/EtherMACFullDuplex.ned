@@ -132,6 +132,7 @@ simple EtherMACFullDuplex like IEtherMAC
                                             // (only used if queueModule==""); additional frames cause a runtime error
         string queueModule = default("");   // name of optional external queue module
         int mtu @unit("B") = default(1500B);
+        string fcsMode @enum("declaredCorrect", "declaredIncorrect", "computed") = default("declaredCorrect");
         @display("i=block/rxtx");
 
         @signal[txPk](type=Packet);
