@@ -190,7 +190,7 @@ void RoutingTableVisualizerBase::addRouteVisualizations(IIPv4RoutingTable *routi
                 auto nextHop = addressResolver.findHostWithAddress(gateway.isUnspecified() ? destination : gateway);
                 if (nextHop != nullptr) {
                     auto key = std::pair<int, int>(node->getId(), nextHop->getId());
-                    if (routeVisualizations.find(key) == routeVisualizations.end())
+                    if (routeVisualizations.find(key) == routeVisualizations.end()) //TODO incorrect! we might have to display several routing table entries on the same arrow! so: add if this is different from the already added ones
                         addRouteVisualization(createRouteVisualization(route, node, nextHop));
                 }
             }
