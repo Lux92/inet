@@ -66,6 +66,7 @@ void Ieee8022Llc::encapsulate(Packet *frame)
 void Ieee8022Llc::decapsulate(Packet *frame)
 {
     const auto& llcHeader = frame->popHeader<Ieee8022LlcHeader>();
+    // TODO: ssap, dsap
     if (auto snapHeader = std::dynamic_pointer_cast<Ieee8022SnapHeader>(llcHeader)) {
         int etherType = snapHeader->getProtocolId();
         if (etherType != -1) {
@@ -73,9 +74,6 @@ void Ieee8022Llc::decapsulate(Packet *frame)
             frame->ensureTag<DispatchProtocolReq>()->setProtocol(ProtocolGroup::ethertype.getProtocol(etherType));
             frame->ensureTag<PacketProtocolTag>()->setProtocol(ProtocolGroup::ethertype.getProtocol(etherType));
         }
-    }
-    else {
-        // TODO: ssap, dsap
     }
 }
 
