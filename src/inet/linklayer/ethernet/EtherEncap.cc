@@ -149,7 +149,6 @@ Ptr<EtherFrame> EtherEncap::decapsulate(Packet *packet)
     // EV_STATICCONTEXT;
 
     auto ethHeader = packet->popHeader<EtherFrame>();
-    packet->popTrailer<EthernetFcs>(byte(ETHER_FCS_BYTES));
 
     // remove Padding if possible
     if (auto header = dynamic_cast<EtherFrameWithPayloadLength *>(ethHeader.get())) {

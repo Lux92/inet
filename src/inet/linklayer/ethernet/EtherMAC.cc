@@ -806,6 +806,8 @@ void EtherMAC::processReceivedDataFrame(Packet *packet)
     numBytesReceivedOK += curBytes;
     emit(rxPkOkSignal, packet);
 
+    packet->popTrailer<EthernetFcs>(byte(ETHER_FCS_BYTES));     // fcs verified in frameReceptionComplete()
+
     packet->ensureTag<DispatchProtocolReq>()->setProtocol(&Protocol::ethernet);
     if (interfaceEntry)
         packet->ensureTag<InterfaceInd>()->setInterfaceId(interfaceEntry->getInterfaceId());

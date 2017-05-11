@@ -130,8 +130,6 @@ void EtherMACFullDuplex::startFrameTransmission()
 
 void EtherMACFullDuplex::processFrameFromUpperLayer(Packet *packet)
 {
-    ASSERT(packet->getByteLength() >= MIN_ETHERNET_FRAME_BYTES);
-
     EV_INFO << "Received " << packet << " from upper layer." << endl;
 
     emit(packetReceivedFromUpperSignal, packet);
@@ -331,7 +329,7 @@ void EtherMACFullDuplex::handleEndPausePeriod()
     beginSendFrames();
 }
 
-void EtherMACFullDuplex::processReceivedDataFrame(Packet *packet, const Ptr<EtherFrame>& frame)
+void EtherMACFullDuplex::processReceivedDataFrame(Packet *packet, const Ptr<EtherFrame>& header)
 {
     // statistics
     unsigned long curBytes = packet->getByteLength();
@@ -339,6 +337,7 @@ void EtherMACFullDuplex::processReceivedDataFrame(Packet *packet, const Ptr<Ethe
     numBytesReceivedOK += curBytes;
     emit(rxPkOkSignal, packet);
 
+    packet->popTrailer<EthernetFcs>(byte(ETHER_FCS_BYTES));     // fcs verified in processMsgFromNetwork()
     packet->ensureTag<DispatchProtocolReq>()->setProtocol(&Protocol::ethernet);
     if (interfaceEntry)
         packet->ensureTag<InterfaceInd>()->setInterfaceId(interfaceEntry->getInterfaceId());
