@@ -47,7 +47,7 @@ simple InterfaceTableVisualizerBase extends VisualizerBase
         
         bool displayInterfaceTables = default(false); // display interface table data, disabled by default
         bool displayWiredInterfacesAtConnections = default(true); // specifies where wired interfaces are displayed
-        bool displayBackground = default(false); // specifies whether the text should have a background or not
+        bool displayBackground = default(false); // specifies whether the text should have a background or not TODO: eliminate, backgroundColor = "" should be used to turn off
 
         string nodeFilter = default("*"); // which nodes are considered, matches all nodes by default
         string interfaceFilter = default("*"); // which interfaces are considered, matches all interfaces by default
