@@ -42,7 +42,10 @@ class INET_API InProgressFrames
                 bool operator() (const Ieee80211DataOrMgmtFrame *frame) {
                     if (frame->getType() == ST_DATA_WITH_QOS) {
                         auto dataFrame = check_and_cast<const Ieee80211DataFrame*>(frame);
-                        return seqAndFragNums.count(std::make_pair(dataFrame->getReceiverAddress(), std::make_pair(dataFrame->getTid(), SequenceControlField(dataFrame->getSequenceNumber(), dataFrame->getFragmentNumber())))) != 0;
+                        bool x = seqAndFragNums.count(std::make_pair(dataFrame->getReceiverAddress(), std::make_pair(dataFrame->getTid(), SequenceControlField(dataFrame->getSequenceNumber(), dataFrame->getFragmentNumber())))) != 0;
+                        if (x)
+                            const_cast<Ieee80211DataOrMgmtFrame *>(frame)->setKind(0);
+                        return x;
                     }
                     else
                         throw cRuntimeError("This method is not applicable for NonQoS frames");

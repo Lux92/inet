@@ -62,6 +62,7 @@ void Tx::transmitFrame(Ieee80211Frame *frame, simtime_t ifs, ITx::ICallback *txC
     Enter_Method("transmitFrame(\"%s\")", frame->getName());
     take(frame);
     auto frameToTransmit = inet::utils::dupPacketAndControlInfo(frame);
+    frameToTransmit->setKind(0);
     this->frame = frameToTransmit;
     if (auto twoAddrFrame = dynamic_cast<Ieee80211TwoAddressFrame*>(frameToTransmit))
         twoAddrFrame->setTransmitterAddress(address);

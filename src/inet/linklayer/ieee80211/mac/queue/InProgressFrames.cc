@@ -41,6 +41,7 @@ void InProgressFrames::ensureHasFrameToTransmit()
         if (frames) {
             for (auto frame : *frames) {
                 ackHandler->frameGotInProgress(frame);
+                frame->setKind(444);
                 inProgressFrames.push_back(frame);
             }
             delete frames;
@@ -73,6 +74,7 @@ Ieee80211DataOrMgmtFrame* InProgressFrames::getPendingFrameFor(Ieee80211Frame *f
             auto firstFrame = (*frames)[0];
             for (auto frame : *frames) {
                 ackHandler->frameGotInProgress(frame);
+                frame->setKind(444);
                 inProgressFrames.push_back(frame);
             }
             delete frames;
@@ -87,6 +89,7 @@ Ieee80211DataOrMgmtFrame* InProgressFrames::getPendingFrameFor(Ieee80211Frame *f
 
 void InProgressFrames::dropFrame(Ieee80211DataOrMgmtFrame* frame)
 {
+    frame->setKind(0);
     inProgressFrames.remove(frame);
 }
 
